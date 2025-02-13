@@ -1,0 +1,128 @@
+% Created 2024-09-23 Mon 13:35
+% Intended LaTeX compiler: pdflatex
+%%% TeX-command-extra-options: "-shell-escape"
+
+\documentclass{iacrtrans}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+% -- Default Packages --
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins}
+\usepackage{booktabs}
+% \usepackage{multirow}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\usepackage[nameinlink]{cleveref}
+\crefname{algocf}{alg.}{algs.}
+\Crefname{algocf}{Algorithm}{Algorithms}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, trees}
+\usepackage{forest}
+\forestset{path highlight/.style={blue,edge={blue, line width=2pt},
+for ancestors={edge={blue,line width=2pt},
+  if level=0{}{blue}}}}
+
+\newtcolorbox{scriptPubKeyBox}{
+  enhanced,
+  boxsep=1pt,
+  arc=0.75ex,
+  colback=gray!10,
+  colframe=gray!40,
+  boxrule=1pt,
+  leftrule=80pt,
+  top=-3.5mm,
+  overlay unbroken and first ={%
+    \node[minimum width=1cm,
+      anchor=south,
+      font=\sffamily\bfseries,
+      xshift=40pt,
+      yshift=-6.5pt,
+    black]
+    at (frame.west) {scriptPubKey:};
+  }
+}
+
+\newtcolorbox{scriptSigBox}{
+  enhanced,
+  boxsep=1pt,
+  arc=0.75ex,
+  colback=gray!10,
+  colframe=gray!40,
+  boxrule=1pt,
+  leftrule=80pt,
+  top=-3.5mm,
+  overlay unbroken and first ={%
+    \node[minimum width=1cm,
+      anchor=south,
+      font=\sffamily\bfseries,
+      xshift=40pt,
+      yshift=-6.5pt,
+    black]
+    at (frame.west) {scriptSig:};
+  }
+}
+
+\newcommand{\mycomment}[1]{}
+\newcommand{\elem}[1]{\, \langle #1 \rangle \,}
+\newcommand{\opcode}[1]{\, \texttt{#1} \,}
+\newcommand{\script}[1]{ $\big\{ #1 \big\}$ }
+
+% -- Algorithms --
+\usepackage[
+    titlenumbered,
+    linesnumbered,
+    ruled
+]{algorithm2e}
+\SetKwInOut{Input}{Input}
+\SetKwInOut{Output}{Output}
+\SetKwInOut{Return}{Return}
+
+\SetKwComment{Comment}{/* }{ */}
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\author{Distributed Lab}
+\institute{Distributed Lab}
+\title{Optimized ZK verification of ECDSA signature with partially outsourced computations}
+
+\usepackage{biblatex}
+\addbibresource{refs.bib}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+The Elliptic Curve Digital Signature Algorithm (ECDSA) is one of the most widely adopted signature schemes, particularly in blockchain systems. 
+However, when it comes to zero-knowledge proof systems, verifying ECDSA signatures presents significant computational challenges.
+
+Current implementations of ECDSA signature verification in zero-knowledge circuits face several limitations. 
+The primary challenge lies in the computational complexity of the verification process, which requires numerous elliptic curve operations and modular arithmetic calculations. 
+These operations translate into a large number of constraints when expressed in arithmetic circuits, making the proof generation process computationally intensive and time-consuming.
+
+We propose to ousource part of computations to a verification party, while still preserving user's privacy.
+
+\section{Optimization}
+Let $PK$ be a public key, $(r, s)$ - signature, $m$ - message, $G$ - base point (generator of EC group), $R$ - point, point where $R.x == r$.
+Then to verify an ECDSA signature, the following equation must hold:
+
+\begin{equation}
+    \frac{m}{s} \cdot G + \frac{r}{s} \cdot PK = R
+\end{equation}
+
+
+\setcounter{tocdepth}{2}
+
+
+
+\end{document}
