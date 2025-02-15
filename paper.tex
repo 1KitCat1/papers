@@ -113,12 +113,16 @@ These operations translate into a large number of constraints when expressed in 
 We propose to ousource part of computations to a verification party, while still preserving user's privacy.
 
 \section{Optimization}
-Let $PK$ be a public key, $(r, s)$ - signature, $m$ - message, $G$ - base point (generator of EC group), $R$ - point, point where $R.x == r$.
+Let $PK$ be a public key, $(r, s)$ - signature, $m$ - message, $G$ - base point (generator of EC group), $R$ - point, where $R.x == r$.
 Then to verify an ECDSA signature, the following equation must hold:
 
 \begin{equation}
-    \frac{m}{s} \cdot G + \frac{r}{s} \cdot PK = R
+    m \cdot s^{-1} \cdot G + r \cdot s^{-1} \cdot PK = R
 \end{equation}
+
+Let $\mathcal{B}$ be random value selected uniformly from range $[0, 2^c)$, where $c$ is security parameter; 
+$\mathbb{B} = [\mathcal{B}]G$
+
 
 
 \setcounter{tocdepth}{2}
