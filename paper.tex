@@ -90,7 +90,7 @@ for ancestors={edge={blue,line width=2pt},
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}
 
-\author{Distributed Lab}
+\author{Denys Riabtsev, Mykhailo Khotian}
 \institute{Distributed Lab}
 \title{Optimized ZK verification of ECDSA signature with partially outsourced computations}
 
@@ -112,16 +112,45 @@ These operations translate into a large number of constraints when expressed in 
 
 We propose to ousource part of computations to a verification party, while still preserving user's privacy.
 
+
+
 \section{Optimization}
 Let $PK$ be a public key, $(r, s)$ - signature, $m$ - message, $G$ - base point (generator of EC group), $R$ - point, where $R.x == r$.
 Then to verify an ECDSA signature, the following equation must hold:
 
 \begin{equation}
-    m \cdot s^{-1} \cdot G + r \cdot s^{-1} \cdot PK = R
+    [m \cdot s^{-1}] G + [r \cdot s^{-1}] PK = R
 \end{equation}
 
+This equation consist of two scalar multiplications:
+\begin{enumerate}
+    \item $[m \cdot s^{-1}] G$ - scalar multiplication of base point;
+    \item $[r \cdot s^{-1}] PK$ - scalar multiplication of public key.
+\end{enumerate}
+
+By using precompute tables and windowed double-and-add algorithm we can significantly optimize scalar multiplication of base point.
+As the base point is known, the precomputation table can be generated during circuit compilation time, significantly reducing the number 
+of constraints in the circuit.
+
+The problem rises with scalar multiplication of public key. As it is not known beforehand, table should be calcutated in-circuit, which 
+adds additional computational complexity.
+
+
+
 Let $\mathcal{B}$ be random value selected uniformly from range $[0, 2^c)$, where $c$ is security parameter; 
-$\mathbb{B} = [\mathcal{B}]G$
+$\mathbb{B} = [\mathcal{B}] PK$
+
+By multiplying both sides of the equation by $\mathcal{B}$, we obtain:
+
+\begin{equation}
+  [m \cdot s^{-1} \cdot \mathcal{B}] G + [r \cdot s^{-1} \cdot \mathcal{B}] PK = [\mathcal{B}]R
+\end{equation}
+
+\begin{equation}
+  [m \cdot s^{-1} \cdot \mathcal{B}] G + [r \cdot s^{-1}] \mathbb{B} = [\mathcal{B}]R
+\end{equation}
+
+There are 
 
 
 
