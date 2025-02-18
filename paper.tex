@@ -113,7 +113,6 @@ These operations translate into a large number of constraints when expressed in 
 We propose to ousource part of computations to a verification party, while still preserving user's privacy.
 
 
-
 \section{Optimization}
 Let $PK$ be a public key, $(r, s)$ - signature, $m$ - message, $G$ - base point (generator of EC group), $R$ - point, where $R.x == r$.
 Then to verify an ECDSA signature, the following equation must hold:
@@ -128,12 +127,18 @@ This equation consist of two scalar multiplications:
     \item $[r \cdot s^{-1}] PK$ - scalar multiplication of public key.
 \end{enumerate}
 
-By using precompute tables and windowed double-and-add algorithm we can significantly optimize scalar multiplication of base point.
+By using precompute tables and windowed double-and-add algorithm we can significantly optimize scalar multiplication of \textit{base point}.
 As the base point is known, the precomputation table can be generated during circuit compilation time, significantly reducing the number 
 of constraints in the circuit.
 
-The problem rises with scalar multiplication of public key. As it is not known beforehand, table should be calcutated in-circuit, which 
+The problem rises with scalar multiplication of \textit{public key}. As it is not known beforehand, table should be calcutated in-circuit, which 
 adds additional computational complexity.
+
+
+Let $\mathbb{A}$ be number of constraints for point addition, $\mathbb{D}$ - for point double; $F$ - field size, $W$ - window size for windowed double and add. 
+Then the complexity of
+\textit{base point} scalar multiplication is $((F / 8) - 1) \cdot \mathbb{A}$
+\textit{public key} scalar multiplication is $(F / W) \cdot \mathbb{D}$
 
 
 
