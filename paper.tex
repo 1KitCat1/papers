@@ -113,7 +113,7 @@ These operations translate into a large number of constraints when expressed in 
 We propose to ousource part of computations to a verification party, while still preserving user's privacy.
 
 
-\section{Optimization}
+\section{Problem overview}
 Let $PK$ be a public key, $(r, s)$ - signature, $m$ - message, $G$ - base point (generator of EC group), $R$ - point, where $R.x == r$.
 Then to verify an ECDSA signature, the following equation must hold:
 
@@ -135,12 +135,47 @@ The problem rises with scalar multiplication of \textit{public key}. As it is no
 adds additional computational complexity.
 
 
-Let $\mathbb{A}$ be number of constraints for point addition, $\mathbb{D}$ - for point double; $F$ - field size, $W$ - window size for windowed double and add. 
+Let $\mathbb{A}$ be number of constraints for point addition, $\mathbb{D}$ - for point double; $F$ - field size,
+ $W$ - window size for windowed double and add.
 Then the complexity of
-\textit{base point} scalar multiplication is $((F / 8) - 1) \cdot \mathbb{A}$
-\textit{public key} scalar multiplication is $(F / W) \cdot \mathbb{D}$
+\textit{base point} scalar multiplication is 
+\[(\dfrac{F}{W} - 1) \cdot \mathbb{A};\]
+
+for \textit{public key} scalar multiplication is 
+\[(F - W) \cdot \mathbb{D} + (\dfrac{F - W}{W}) \cdot \mathbb{A} + (2 ^ W - 1) \cdot \mathbb{A} + \mathbb{D}\],
+
+where $(2 ^ W - 1) \cdot \mathbb{A} + \mathbb{D}$ is required to generate a precompute table.
 
 
+The complexity of scalar multiplication of public key is significantly higher than base point multiplication.
+
+
+\textit{
+With window size $W = 4$ and field size $F = 256$, the number of constraints for base point multiplication is
+$63 \cdot \mathbb{A}$, while for public key multiplication it is $252 \cdot \mathbb{D} + 63 \cdot \mathbb{A} + 15 \cdot \mathbb{A} + \mathbb{D}$.
+Additionally, the window size for \textit{base point} can be increased, resulting in lowering the number of constraints, but increasing off-circuit 
+precomputation load.
+}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lr}
+\hline
+\textbf{Operation} & \textbf{Constraints} \\
+\hline
+Base point multiplication & 122,383 \\
+Public key multiplication & 1,428,821 \\
+\hline
+\end{tabular}
+\caption{Number of constraints for scalar multiplication operations in secp256r1}
+\label{tab:constraints}
+\end{table}
+
+This shows that public key multiplication requires significantly more constraints, especially considering that point doubling ($\mathbb{D}$)
+is typically more expensive than point addition ($\mathbb{A}$).
+
+
+\section{Proposed optimization}
 
 Let $\mathcal{B}$ be random value selected uniformly from range $[0, 2^c)$, where $c$ is security parameter; 
 $\mathbb{B} = [\mathcal{B}] PK$
