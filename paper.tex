@@ -29,6 +29,8 @@
 \forestset{path highlight/.style={blue,edge={blue, line width=2pt},
 for ancestors={edge={blue,line width=2pt},
   if level=0{}{blue}}}}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
 
 \newtcolorbox{scriptPubKeyBox}{
   enhanced,
@@ -90,7 +92,7 @@ for ancestors={edge={blue,line width=2pt},
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}
 
-\author{Denys Riabtsev, Mykhailo Khotian}
+\author{Scooby-Doo}
 \institute{Distributed Lab}
 \title{Optimized ZK verification of ECDSA signature with partially outsourced computations}
 
@@ -177,6 +179,30 @@ is typically more expensive than point addition ($\mathbb{A}$).
 
 \section{Proposed optimization}
 
+The intuition is to outsource scalar multiplication to the contract. If computing $[r \cdot s^{-1}] PK$ in-circuit requires too many constraints
+we can commit to the result of such computations publicly and the smart contract would verify it:
+
+
+\begin{algorithm}[H]
+  \caption{ECDSA signature verification with outsourced scalar multiplication}
+  \begin{algorithmic}[1]
+  \Require $m$ - message hash, $r,s$ - signature components, $PK$ - public key
+  \State $u_1 \gets m \cdot s^{-1} \bmod n$
+  \State $u_2 \gets r \cdot s^{-1} \bmod n$
+  \State $U_1 \gets [u_1]G$  \Comment{Computed in-circuit}
+  \State $U_2 \gets [u_2]PK$  \Comment{Computed off-circuit}
+  \State $R \gets U_1 + U_2$
+  \State $R.x == r$
+  
+  \end{algorithmic}
+  \end{algorithm}
+  
+Note that in such a scheme, values $u_2$ and $PK$ must be made public. 
+However, revealing the public key directly may not be suitable for all applications, particularly those requiring privacy or anonymity.
+To address this privacy concern, we propose using blinding values for off-circuit computation to obscure the actual public key 
+while maintaining the correctness of the verification.
+
+
 Let $\mathcal{B}$ be random value selected uniformly from range $[0, 2^c)$, where $c$ is security parameter; 
 $\mathbb{B} = [\mathcal{B}] PK$
 
@@ -190,12 +216,56 @@ By multiplying both sides of the equation by $\mathcal{B}$, we obtain:
   [m \cdot s^{-1} \cdot \mathcal{B}] G + [r \cdot s^{-1}] \mathbb{B} = [\mathcal{B}]R
 \end{equation}
 
-There are 
+
+\begin{algorithm}[H]
+  \caption{ECDSA signature verification with blinded public key}
+  \begin{algorithmic}[1]
+  \Require $m$ - message hash, $r,s$ - signature components, $PK$ - public key, $\mathcal{B}$ - blinding factor
+  \State $u_1 \gets m \cdot s^{-1} \bmod n$
+  \State $u_2 \gets r \cdot s^{-1} \bmod n$
+  \State $\mathbb{B} \gets [\mathcal{B}]PK$ * 
+  \State $U_1' \gets [u_1 \cdot \mathcal{B}]G$
+  \State $U_2' \gets [u_2]\mathbb{B}$  \Comment{Computed off-circuit}
+  \State $R' \gets [\mathcal{B}]R$ * 
+  \State $U_1' + U_2' == R'$
+  \end{algorithmic}
+\end{algorithm}
+
+* Note that computations of type $\mathbb{B} \gets [\mathcal{B}]PK$ is also heavy to compute and can be splitted to a different circuit.
+
+\begin{algorithm}[H]
+  \caption{Proving scalar multiplication of a point}
+  \begin{algorithmic}[1]
+  \Require private: $\mathcal{B}, PK$, public: $\mathbb{B}, commit$
+  \State $\mathbb{B} \gets [\mathcal{B}]PK$
+  \State $commit = Poseidon(\mathcal{B}, PK)$
+  \end{algorithmic}
+\end{algorithm}
+
+The complete verification process can be represented as follows:
+
+\begin{algorithm}[H]
+  \caption{Proving scalar multiplication of a point}
+  \begin{algorithmic}[1]
+  \Require private: $m$ - message hash, $r,s$ - signature, $PK$ - public key, $\mathcal{B}$ - blinding factor
+
+  public: $\mathbb{B}$, $commit$, $U_2', u_2,
+  \pi$ - proof according to $Algorithm 3$
+  \State $commit' = Poseidon(\mathcal{B}, PK)$
+  \State $commit' == commit$
+  \State $Verify(\pi, \mathbb{B}, \mathcal{B}, PK, commit)$ \Comment{Computed off-circuit}
+  \State $u_1 \gets m \cdot s^{-1} \bmod n$
+  \State $u_2 \gets r \cdot s^{-1} \bmod n$
+  \State $U_2' \gets [u_2]\mathbb{B}$  \Comment{Computed off-circuit}
+  \State $U_1' \gets [u_1 \cdot \mathcal{B}]G$
+  \State $R' \gets [\mathcal{B}]R$
+  \State $U_1' + U_2' == R'$
+  \end{algorithmic}
+\end{algorithm}
 
 
-
-\setcounter{tocdepth}{2}
-
+\section{Benchmarks}
+/*TODO/*
 
 
 \end{document}
